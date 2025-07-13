@@ -159,8 +159,8 @@ async def ask_user_via_slack(question: str) -> str:
         event = asyncio.Event()
         pending_requests[str(response_waiting_ts)] = {"event": event, "response": None}
         
-        # 3. イベントが発生するのを待つ (タイムアウトを300秒=5分に設定)
-        await asyncio.wait_for(event.wait(), timeout=300.0)
+        # 3. イベントが発生するのを待つ (タイムアウトを1800秒=30分に設定)
+        await asyncio.wait_for(event.wait(), timeout=1800.0)
 
         # 4. イベントが発生したら、保存された応答を取得
         response_text = pending_requests[str(response_waiting_ts)]["response"]
