@@ -110,7 +110,7 @@ async def handle_message_events(body: Dict[str, Any]):
 async def ask_user_via_slack(question: str) -> str:
     """
     指定された質問をSlackの特定チャンネルに投稿し、ユーザーからのスレッド返信を待ち、その内容を文字列として返す。
-    応答がない場合、5分でタイムアウトする。
+    応答がない場合、30分でタイムアウトする。
     
     初回は新規メッセージとして投稿し、2回目以降は同じスレッドで投稿される。
 
