@@ -92,14 +92,13 @@ async def handle_message_events(body: Dict[str, Any]):
     user_text = event.get("text")
     print(f"thread_ts: {thread_ts}, user_text: {user_text}")
 
-    await app.client.chat_postMessage(
-        channel=str(SLACK_CHANNEL_ID),
-        text="received your message. please wait",
-        thread_ts=thread_ts
-    )
-
     # スレッドへの返信であり、かつそのスレッドが待機中のリクエストである場合
     if thread_ts and thread_ts in pending_requests:
+        await app.client.chat_postMessage(
+            channel=str(SLACK_CHANNEL_ID),
+            text="received your message. please wait",
+            thread_ts=thread_ts
+        )
         request_info = pending_requests[thread_ts]
         # 応答内容を保存
         request_info["response"] = user_text
