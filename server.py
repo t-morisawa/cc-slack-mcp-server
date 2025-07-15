@@ -16,32 +16,32 @@ from slack_bolt.async_app import AsyncApp
 from slack_bolt.adapter.socket_mode.async_handler import AsyncSocketModeHandler
 from slack_sdk.web.async_client import AsyncWebClient
 
-# --- 環境設定 ---
-# .envファイルから環境変数を読み込む
+# --- Environment Setup ---
+# Load environment variables from .env file
 load_dotenv()
 SLACK_BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN")
 SLACK_APP_TOKEN = os.environ.get("SLACK_APP_TOKEN")
 SLACK_CHANNEL_ID = os.environ.get("SLACK_CHANNEL_ID")
 
-# --- 初期化 ---
-# SSL contextを作成（SSL証明書エラーを回避）
+# --- Initialization ---
+# Create SSL context (to avoid SSL certificate errors)
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
-# SSL設定を含むWebClientを作成
+# Create WebClient with SSL settings
 web_client = AsyncWebClient(token=SLACK_BOT_TOKEN, ssl=ssl_context)
 
-# Slack Boltアプリを非同期で初期化（SSL設定を含むWebClientを渡す）
+# Initialize Slack Bolt app asynchronously (pass WebClient with SSL settings)
 app = AsyncApp(token=SLACK_BOT_TOKEN, client=web_client)
 
-# --- 応答待機のためのグローバル変数 ---
-# 形式: { "メッセージのタイムスタンプ": {"event": asyncio.Event(), "response": "返信内容"} }
+# --- Global variable for waiting for responses ---
+# Format: { "message timestamp": {"event": asyncio.Event(), "response": "reply content"} }
 pending_requests: Dict[str, Dict[str, Any]] = {}
 
-# --- スレッド継続のためのグローバル変数 ---
-# 最初のメッセージのタイムスタンプを保存し、2回目以降はスレッドで投稿するために使用
+# --- Global variable for thread continuation ---
+# Save the timestamp of the first message, and use it for posting in the same thread from the second time onwards
 current_thread_ts: str = ""
 
-# --- アプリケーションコンテキスト ---
+# --- Application Context ---
 @dataclass
 class AppContext:
     handler: AsyncSocketModeHandler
@@ -49,12 +49,12 @@ class AppContext:
 
 @asynccontextmanager
 async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
-    """サーバーのライフサイクルを管理する"""
+    """Manage the server lifecycle"""
     print("Starting Slack Socket Mode handler...")
     handler = AsyncSocketModeHandler(app, SLACK_APP_TOKEN)
     handler_task = asyncio.create_task(handler.start_async())
     
-    # 短時間待機してハンドラーが正常に起動するまで待つ
+    # Wait briefly for the handler to start properly
     await asyncio.sleep(1)
     print("Slack Socket Mode handler started successfully.")
     
@@ -77,111 +77,111 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
                 print(f"Handler task cancellation error: {e}")
         print("Slack Socket Mode handler stopped.")
 
-# MCPサーバーを"SlackInputServer"という名前でインスタンス化（lifespanを指定）
+# Instantiate the MCP server as "SlackInputServer" (specifying lifespan)
 mcp = FastMCP("SlackInputServer", lifespan=app_lifespan)
 
-# --- Slackイベントリスナー ---
+# --- Slack Event Listener ---
 @app.event("message")
 async def handle_message_events(body: Dict[str, Any]):
     """
-    Slackのメッセージイベントを処理する。
-    スレッドへの返信を検知し、待機中のツールに応答を渡すのが目的。
+    Handle Slack message events.
+    Detect replies in threads and pass the response to the waiting tool.
     """
     event = body.get("event", {})
     thread_ts = event.get("thread_ts")
     user_text = event.get("text")
     print(f"thread_ts: {thread_ts}, user_text: {user_text}")
 
-    # スレッドへの返信であり、かつそのスレッドが待機中のリクエストである場合
+    # If this is a reply in a thread and the thread is a pending request
     if thread_ts and thread_ts in pending_requests:
         await app.client.chat_postMessage(
             channel=str(SLACK_CHANNEL_ID),
-            text="received your message. please wait",
+            text="Received your message. Please wait.",
             thread_ts=thread_ts
         )
         request_info = pending_requests[thread_ts]
-        # 応答内容を保存
+        # Save the response content
         request_info["response"] = user_text
-        # イベントをシグナル状態にし、ask_user_via_slack関数の待機を解除する
+        # Set the event to signal and release the wait in ask_user_via_slack
         request_info["event"].set()
 
-# --- MCPツール ---
+# --- MCP Tool ---
 @mcp.tool()
 async def ask_user_via_slack(question: str) -> str:
     """
-    指定された質問をSlackの特定チャンネルに投稿し、ユーザーからのスレッド返信を待ち、その内容を文字列として返す。
-    応答がない場合、30分でタイムアウトする。
+    Post the specified question to a specific Slack channel, wait for a thread reply from a user, and return the content as a string.
+    If there is no response, timeout after 30 minutes.
     
-    初回は新規メッセージとして投稿し、2回目以降は同じスレッドで投稿される。
+    The first time, post as a new message; from the second time onwards, post in the same thread.
 
-    :param question: ユーザーに尋ねたい質問内容のテキスト。
-    :return: ユーザーからの返信テキスト。タイムアウトした場合はエラーメッセージを返す。
+    :param question: The text of the question to ask the user.
+    :return: The reply text from the user. If timed out, returns an error message.
     """
     global current_thread_ts
     
     if not all([SLACK_BOT_TOKEN, SLACK_APP_TOKEN, SLACK_CHANNEL_ID]):
-        return "エラー: Slack連携に必要な環境変数が設定されていません。"
+        return "Error: Required environment variables for Slack integration are not set."
 
-    # コンテキストからハンドラーを取得
+    # Get handler from context
     ctx = mcp.get_context()
     app_ctx = ctx.request_context.lifespan_context
     
     message_ts = None
     
     try:
-        # 1. Slackに質問を投稿（初回は新規メッセージ、2回目以降はスレッドで投稿）
+        # 1. Post the question to Slack (first time as a new message, from the second time in the thread)
         if SLACK_CHANNEL_ID is None:
-            raise ValueError("SLACK_CHANNEL_IDが設定されていません。")
+            raise ValueError("SLACK_CHANNEL_ID is not set.")
         
         if current_thread_ts:
-            # 2回目以降：スレッドで投稿
+            # From the second time: post in the thread
             result = await app.client.chat_postMessage(
                 channel=str(SLACK_CHANNEL_ID),
                 text=question,
                 thread_ts=current_thread_ts
             )
             message_ts = result["ts"]
-            # 応答を待つためには、最初のメッセージのタイムスタンプを使用
+            # Use the timestamp of the first message to wait for a response
             response_waiting_ts = current_thread_ts
         else:
-            # 初回：新規メッセージとして投稿
+            # First time: post as a new message
             result = await app.client.chat_postMessage(
                 channel=str(SLACK_CHANNEL_ID),
                 text=question
             )
             message_ts = str(result["ts"])
             response_waiting_ts = message_ts
-            # 最初のメッセージのタイムスタンプを保存
+            # Save the timestamp of the first message
             current_thread_ts = message_ts
         
-        # 2. 応答を待つためのイベントを作成し、待機リストに登録
+        # 2. Create an event to wait for a response and register it in the pending list
         event = asyncio.Event()
         pending_requests[str(response_waiting_ts)] = {"event": event, "response": None}
         
-        # 3. イベントが発生するのを待つ (タイムアウトを1800秒=30分に設定)
+        # 3. Wait for the event to be set (timeout set to 1800 seconds = 30 minutes)
         await asyncio.wait_for(event.wait(), timeout=1800.0)
 
-        # 4. イベントが発生したら、保存された応答を取得
+        # 4. When the event is set, get the saved response
         response_text = pending_requests[str(response_waiting_ts)]["response"]
-        return f"ユーザーからの回答は「{response_text}」です。これに対するあなたの回答を作成し、再度Slackに投稿してください。"
+        return f"The user's answer is: '{response_text}'. Please create your response to this and post it to Slack again."
 
     except asyncio.TimeoutError:
-        return "エラー: ユーザーからの応答が5分以内にありませんでした。"
+        return "Error: No response from the user within 5 minutes."
     except Exception as e:
-        return f"エラーが発生しました: {e}"
+        return f"An error occurred: {e}"
     finally:
-        # 処理が完了したら、待機リストから該当リクエストを削除
+        # After processing, remove the request from the pending list
         if message_ts and str(response_waiting_ts) in pending_requests:
             del pending_requests[str(response_waiting_ts)]
 
-# --- サーバー起動用メイン関数 ---
-# `mcp run server.py:mcp`で実行されるため、この部分は直接は使われないが、
-# サーバーの起動ロジックをカプセル化するために定義しておく。
+# --- Main function to start the server ---
+# This part is not used directly because it is run with `mcp run server.py:mcp`,
+# but is defined to encapsulate the server startup logic.
 async def main():
-    """MCPサーバーとSlackハンドラを起動する"""
-    print("このスクリプトは `mcp run server.py:mcp` コマンドで起動してください。")
-    print("Slackハンドラーはサーバーのライフサイクルで自動管理されます。")
+    """Start the MCP server and Slack handler"""
+    print("Please start this script with the `mcp run server.py:mcp` command.")
+    print("The Slack handler is automatically managed by the server lifecycle.")
 
-# このスクリプトを直接実行した際の動作確認用
+# For testing when running this script directly
 if __name__ == "__main__":
     mcp.run(transport='stdio')

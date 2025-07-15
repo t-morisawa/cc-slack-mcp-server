@@ -1,19 +1,19 @@
 # Slack MCP Server
 
-Claude CodeなどのコーディングエージェントとSlackで対話するためのMCPサーバです。
+This is an MCP server for interacting with coding agents such as Claude Code via Slack.
 
-## 概要
+## Overview
 
-このサーバーは、MCP（Model Context Protocol）を使用してSlackとの連携を提供します。MCPクライアント（Claude CodeやContinue.devなど）から、Slackの特定のチャンネルに質問を投稿し、ユーザーからの回答を受け取ることができます。そのまま対話を続けることもできます。
+This server provides integration with Slack using the Model Context Protocol (MCP). You can post questions from an MCP client (such as Claude Code or Continue.dev) to a specific Slack channel and receive responses from users. You can also continue the conversation in the same thread.
 
-## 機能
+## Features
 
-- **ask_user_via_slack**: 指定されたチャンネルに質問を投稿し、スレッドでの返信を待つ
-- **タイムアウト機能**: 30分でタイムアウト（応答がない場合）
+- **ask_user_via_slack**: Posts a question to a specified Slack channel and waits for a reply in the thread
+- **Timeout**: 30-minute timeout if no response is received
 
-## 必要な環境変数
+## Required Environment Variables
 
-`.env`ファイルまたは環境変数として以下を設定してください：
+Set the following as environment variables or in a `.env` file:
 
 ```.env
 SLACK_BOT_TOKEN=xoxb-your-bot-token
@@ -21,47 +21,47 @@ SLACK_APP_TOKEN=xapp-your-app-token
 SLACK_CHANNEL_ID=C1234567890
 ```
 
-## Slackアプリの設定
+## Slack App Configuration
 
-1. [Slack API](https://api.slack.com/apps)でアプリを作成
-2. **Bot Token Scopes**で以下の権限を設定：
+1. Create an app at [Slack API](https://api.slack.com/apps)
+2. Under **Bot Token Scopes**, add the following permissions:
    - `chat:write`
    - `channels:read`
    - `channels:history`
-3. **Socket Mode**を有効化してApp-Level Tokenを取得
-4. **Event Subscriptions**で`message.channels`イベントを設定
-5. アプリを対象チャンネルに追加
+3. Enable **Socket Mode** and obtain an App-Level Token
+4. Under **Event Subscriptions**, subscribe to the `message.channels` event
+5. Add the app to the target channel
 
-## インストール・起動
+## Installation & Startup
 
-### 1. uvのインストール
+### 1. Install uv
 
 ```bash
 # Mac/Linux
 curl -LsSf https://astral.sh/uv/install.sh | sh
-# Windows（PowerShell）
+# Windows (PowerShell)
 iwr -useb https://astral.sh/uv/install.ps1 | iex
 ```
 
-### 2. プロジェクトのセットアップ
+### 2. Project Setup
 
 ```bash
-# 仮想環境の作成
+# Create a virtual environment
 uv venv
 
-# 仮想環境のアクティベート
+# Activate the virtual environment
 # Mac/Linux:
 source .venv/bin/activate
 # Windows:
 .venv\Scripts\activate
 
-# 依存関係のインストール
+# Install dependencies
 uv pip install -r requirements.txt
 ```
 
-### 3. 環境変数の設定
+### 3. Set Environment Variables
 
-プロジェクトルートに `.env` ファイルを作成し、以下の環境変数を設定：
+Create a `.env` file in the project root and set the following variables:
 
 ```.env
 SLACK_BOT_TOKEN=xoxb-your-bot-token
@@ -69,9 +69,9 @@ SLACK_APP_TOKEN=xapp-your-app-token
 SLACK_CHANNEL_ID=C1234567890
 ```
 
-### 4. MCPクライアントでの使用
+### 4. Using with MCP Clients
 
-Claude CodeやContinue.devなどのMCPクライアントから以下のようにサーバーを設定：
+Configure your MCP client (e.g., Claude Code or Continue.dev) as follows:
 
 ```json
 {
@@ -85,20 +85,20 @@ Claude CodeやContinue.devなどのMCPクライアントから以下のように
 }
 ```
 
-Claude Codeのコマンドラインから、以下のコマンドでMCPサーバーを追加できます：
+To add the MCP server from the Claude Code command line:
 
 ```bash
 claude mcp add cc-slack uv run /path/to/cc-slack-mcp-server/server.py
 ```
 
-- `cc-slack`：サーバー名（任意）
-- `uv run ...`：仮想環境・依存関係を自動で解決しつつサーバーを起動
+- `cc-slack`: Server name (arbitrary)
+- `uv run ...`: Starts the server with automatic virtual environment and dependency resolution
 
-このコマンドを実行すると、Claude CodeのMCPサーバー一覧に`cc-slack`が追加され、MCPツールが利用できるようになります。
+After running this command, `cc-slack` will be added to the list of MCP servers in Claude Code, and MCP tools will be available.
 
-また、コマンドの許可をSlackから与えることはできないため、安全な環境の中でコマンドの許可を求めないモード(Auto-run, dangerously-skip-permissions)で実行することが推奨されます。
+**Note:** Since it is not possible to grant command permissions from Slack, it is recommended to run the server in a safe environment with auto-run or dangerously-skip-permissions mode enabled, so that the server does not prompt for command permissions.
 
-### 5. デバッグ
+### 5. Debugging
 
 ```bash
 uv run mcp dev server.py
