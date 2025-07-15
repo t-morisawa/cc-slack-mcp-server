@@ -76,7 +76,7 @@ Claude CodeやContinue.devなどのMCPクライアントから以下のように
 ```json
 {
   "mcpServers": {
-    "slack-mcp": {
+    "cc-slack": {
       "command": "uv",
       "args": ["run", "server.py"],
       "cwd": "/path/to/cc-slack-mcp-server"
@@ -84,8 +84,6 @@ Claude CodeやContinue.devなどのMCPクライアントから以下のように
   }
 }
 ```
-
-### 5. Claude CodeでのMCPサーバー追加コマンド
 
 Claude Codeのコマンドラインから、以下のコマンドでMCPサーバーを追加できます：
 
@@ -98,7 +96,9 @@ claude mcp add cc-slack uv run /path/to/cc-slack-mcp-server/server.py
 
 このコマンドを実行すると、Claude CodeのMCPサーバー一覧に`cc-slack`が追加され、MCPツールが利用できるようになります。
 
-### 6. デバッグ
+また、コマンドの許可をSlackから与えることはできないため、安全な環境の中でコマンドの許可を求めないモード(Auto-run, dangerously-skip-permissions)で実行することが推奨されます。
+
+### 5. デバッグ
 
 ```bash
 uv run mcp dev server.py
