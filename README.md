@@ -1,16 +1,15 @@
 # Slack MCP Server
 
-Claude CodeなどのMCPクライアントからSlackでやり取りができるMCPサーバーです。
+Claude CodeなどのコーディングエージェントとSlackで対話するためのMCPサーバです。
 
 ## 概要
 
-このサーバーは、MCP（Model Context Protocol）を使用してSlackとの連携を提供します。MCPクライアント（Claude CodeやContinue.devなど）から、Slackの特定のチャンネルに質問を投稿し、ユーザーからの回答を受け取ることができます。
+このサーバーは、MCP（Model Context Protocol）を使用してSlackとの連携を提供します。MCPクライアント（Claude CodeやContinue.devなど）から、Slackの特定のチャンネルに質問を投稿し、ユーザーからの回答を受け取ることができます。そのまま対話を続けることもできます。
 
 ## 機能
 
 - **ask_user_via_slack**: 指定されたチャンネルに質問を投稿し、スレッドでの返信を待つ
-- **非同期処理**: Slack Socket Modeを使用した非同期通信
-- **タイムアウト機能**: 5分でタイムアウト（応答がない場合）
+- **タイムアウト機能**: 30分でタイムアウト（応答がない場合）
 
 ## 必要な環境変数
 
@@ -36,8 +35,6 @@ SLACK_CHANNEL_ID=C1234567890
 ## インストール・起動
 
 ### 1. uvのインストール
-
-公式推奨の高速パッケージマネージャ[uv](https://github.com/astral-sh/uv)を使います。
 
 ```bash
 # Mac/Linux
