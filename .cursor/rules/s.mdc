@@ -7,4 +7,4 @@ alwaysApply: true
 
 - プログラムは @server.py を参照してください。
 - 仕様は @README.md を参照してください。
-- MCPサーバとは何かについては @prompts/mcp.txt を参照してください。
+- MCPサーバとは何かについては @prompts/mcp.md を参照してください。

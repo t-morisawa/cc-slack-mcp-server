@@ -1,3 +1,5 @@
+# MCPサーバー構築ガイド
+
 はい、承知いたしました。
 AIプログラミングアシスタント（LLM）のコンテキストとして利用できるよう、MCPサーバーの構築方法に関する情報を抽出し、以下にまとめました。
 
@@ -37,6 +39,7 @@ def greet(name: str) -> str:
 ```
 
 3. 機能の公開: リソースとツール
+
 サーバーは「リソース」と「ツール」という2種類の機能を公開できます。
 
 ```Python
@@ -97,6 +100,7 @@ async def get_public_ip() -> str:
 ```
 
 4. 高度な機能
+
 状態とライフサイクルの管理
 データベース接続など、サーバーの起動・終了時に管理が必要なリソースはlifespan引数とasynccontextmanagerを使って処理します。
 
@@ -151,6 +155,7 @@ async def process_files(files: list[str], ctx: Context) -> str:
 ```
 
 5. サーバーの実行とテスト
+
 開発中はmcp devコマンドを使い、サーバーを起動します。これによりMCP Inspectorというデバッグツールが自動で立ち上がります。
 
 実行コマンド:
@@ -160,3 +165,47 @@ uv run mcp dev server.py
 ```
 
 MCP Inspectorを使用すると、Web UI上でリソースの読み込みやツールの実行を対話的にテストでき、クライアントアプリケーションなしでサーバー開発を完結させることが可能です。
+
+6. サーバーのmain関数と推奨起動方法
+
+公式Quickstart（https://modelcontextprotocol.io/quickstart/server）では、MCPサーバーのmain関数は以下のように記述することが推奨されています：
+
+```Python
+if __name__ == "__main__":
+    mcp.run(transport='stdio')
+```
+
+この形式にすることで、`python server.py` や `uv run server.py` など、どちらの方法でもサーバーが正しく起動します。
+
+7. uvによる推奨起動方法
+
+公式でも推奨されている高速パッケージマネージャuvを使うことで、仮想環境の作成・依存インストール・サーバー起動が簡単に行えます。
+
+- 仮想環境の作成
+
+```bash
+uv venv
+```
+
+- 仮想環境のアクティベート
+
+```bash
+# Mac/Linux:
+source .venv/bin/activate
+# Windows:
+.venv\Scripts\activate
+```
+
+- 依存関係のインストール
+
+```bash
+uv pip install -r requirements.txt
+```
+
+MCPクライアントから直接呼び出す場合：
+
+```bash
+uv run /path/to/your/server.py
+```
+
+この方法により、公式の推奨に沿った形でMCPサーバーを運用できます。

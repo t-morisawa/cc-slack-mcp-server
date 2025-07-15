@@ -100,3 +100,12 @@ claude mcp add cc-slack uv run /path/to/cc-slack-mcp-server/server.py
 - `uv run ...`：仮想環境・依存関係を自動で解決しつつサーバーを起動
 
 このコマンドを実行すると、Claude CodeのMCPサーバー一覧に`cc-slack`が追加され、MCPツールが利用できるようになります。
+
+### 6. デバッグ
+
+```bash
+uv run mcp dev server.py
+```
+
+- Command: `uv`
+- Arguments: `run server.py`
