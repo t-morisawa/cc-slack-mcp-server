@@ -184,8 +184,4 @@ async def main():
 
 # このスクリプトを直接実行した際の動作確認用
 if __name__ == "__main__":
-    print("このスクリプトは `mcp run server.py:mcp` コマンドで起動してください。")
-    print("直接実行すると、Slackのリスナーのみが起動し、MCPツールは利用できません。")
-    
-    # 動作確認のためにSlackハンドラのみを起動
-    asyncio.run(main())
+    mcp.run(transport='stdio')

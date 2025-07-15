@@ -16,7 +16,7 @@ Claude CodeなどのMCPクライアントからSlackでやり取りができるM
 
 `.env`ファイルまたは環境変数として以下を設定してください：
 
-```
+```.env
 SLACK_BOT_TOKEN=xoxb-your-bot-token
 SLACK_APP_TOKEN=xapp-your-app-token
 SLACK_CHANNEL_ID=C1234567890
@@ -35,39 +35,68 @@ SLACK_CHANNEL_ID=C1234567890
 
 ## インストール・起動
 
+### 1. uvのインストール
+
+公式推奨の高速パッケージマネージャ[uv](https://github.com/astral-sh/uv)を使います。
+
 ```bash
-# 依存関係をインストール
-pip install mcp slack-bolt python-dotenv certifi
-
-# MCPサーバーとして起動
-mcp run server.py:mcp
+# Mac/Linux
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Windows（PowerShell）
+iwr -useb https://astral.sh/uv/install.ps1 | iex
 ```
 
-## 使用方法
+### 2. プロジェクトのセットアップ
 
-MCPクライアント（Claude Code等）から以下のツールを使用できます：
+```bash
+# 仮想環境の作成
+uv venv
 
-### ask_user_via_slack
+# 仮想環境のアクティベート
+# Mac/Linux:
+source .venv/bin/activate
+# Windows:
+.venv\Scripts\activate
 
-```python
-# 例：Claude Codeから使用
-await ask_user_via_slack("この機能についてどう思いますか？")
+# 依存関係のインストール
+uv pip install -r requirements.txt
 ```
 
-1. 質問がSlackの指定チャンネルに投稿されます
-2. ユーザーはスレッドで回答します
-3. 5分以内に回答がない場合はタイムアウトします
-4. 回答内容がMCPクライアントに返されます
+### 3. 環境変数の設定
 
-## 注意事項
+プロジェクトルートに `.env` ファイルを作成し、以下の環境変数を設定：
 
-- スレッドでの返信のみが有効な回答として認識されます
-- 複数の質問を同時に投稿することも可能です
-- SSL証明書エラーを回避するため、`certifi`を使用しています
+```.env
+SLACK_BOT_TOKEN=xoxb-your-bot-token
+SLACK_APP_TOKEN=xapp-your-app-token
+SLACK_CHANNEL_ID=C1234567890
+```
 
-## トラブルシューティング
+### 4. MCPクライアントでの使用
 
-- 環境変数が正しく設定されているか確認
-- Slackアプリの権限が適切に設定されているか確認
-- チャンネルIDが正しいか確認（Cで始まる文字列）
-- ボットがチャンネルに追加されているか確認
+Claude CodeやContinue.devなどのMCPクライアントから以下のようにサーバーを設定：
+
+```json
+{
+  "mcpServers": {
+    "slack-mcp": {
+      "command": "uv",
+      "args": ["run", "server.py"],
+      "cwd": "/path/to/cc-slack-mcp-server"
+    }
+  }
+}
+```
+
+### 5. Claude CodeでのMCPサーバー追加コマンド
+
+Claude Codeのコマンドラインから、以下のコマンドでMCPサーバーを追加できます：
+
+```bash
+claude mcp add cc-slack uv run /path/to/cc-slack-mcp-server/server.py
+```
+
+- `cc-slack`：サーバー名（任意）
+- `uv run ...`：仮想環境・依存関係を自動で解決しつつサーバーを起動
+
+このコマンドを実行すると、Claude CodeのMCPサーバー一覧に`cc-slack`が追加され、MCPツールが利用できるようになります。

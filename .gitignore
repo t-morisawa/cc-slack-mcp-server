@@ -4,3 +4,4 @@ __pycache__/
 .vscode/
 .cursorrules
 venv/
+.venv/
