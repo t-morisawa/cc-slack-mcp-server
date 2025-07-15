@@ -1,4 +1,4 @@
-# Slack MCP Server
+# cc-slack
 
 This is an MCP server for interacting with coding agents such as Claude Code via Slack.
 
