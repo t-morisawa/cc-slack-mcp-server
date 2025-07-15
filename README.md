@@ -11,16 +11,6 @@ This server provides integration with Slack using the Model Context Protocol (MC
 - **ask_user_via_slack**: Posts a question to a specified Slack channel and waits for a reply in the thread
 - **Timeout**: 30-minute timeout if no response is received
 
-## Required Environment Variables
-
-Set the following as environment variables or in a `.env` file:
-
-```.env
-SLACK_BOT_TOKEN=xoxb-your-bot-token
-SLACK_APP_TOKEN=xapp-your-app-token
-SLACK_CHANNEL_ID=C1234567890
-```
-
 ## Slack App Configuration
 
 1. Create an app at [Slack API](https://api.slack.com/apps)
